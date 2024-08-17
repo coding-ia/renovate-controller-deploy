@@ -102,7 +102,7 @@ resource "aws_ecs_task_definition" "renovate" {
     ]
   )
   cpu                = "1024"
-  execution_role_arn = "arn:aws:iam::211125334931:role/ecsTaskExecutionRole"
+  execution_role_arn = aws_iam_role.renovate_task_execution_role.arn
   family             = "renovate"
   memory             = "3072"
   network_mode       = "awsvpc"
@@ -157,7 +157,7 @@ resource "aws_ecs_task_definition" "renovate_controller" {
         ]
         environmentFiles = []
         essential        = true
-        image            = "211125334931.dkr.ecr.us-east-2.amazonaws.com/renovate-controller:latest"
+        image            = "${var.renovate_controller_container_image}"
         logConfiguration = {
           logDriver = "awslogs"
           options = {
@@ -180,7 +180,7 @@ resource "aws_ecs_task_definition" "renovate_controller" {
     ]
   )
   cpu                = "1024"
-  execution_role_arn = "arn:aws:iam::211125334931:role/ecsTaskExecutionRole"
+  execution_role_arn = aws_iam_role.renovate_task_execution_role.arn
   family             = "renovate-controller"
   memory             = "3072"
   network_mode       = "awsvpc"
@@ -196,6 +196,38 @@ resource "aws_ecs_task_definition" "renovate_controller" {
     cpu_architecture        = "X86_64"
     operating_system_family = "LINUX"
   }
+}
+
+resource "aws_iam_role" "renovate_task_execution_role" {
+  assume_role_policy = jsonencode(
+    {
+      Statement = [
+        {
+          Action = "sts:AssumeRole"
+          Effect = "Allow"
+          Principal = {
+            Service = "ecs-tasks.amazonaws.com"
+          }
+          Sid = ""
+        },
+      ]
+      Version = "2008-10-17"
+    }
+  )
+  force_detach_policies = false
+  managed_policy_arns = [
+    "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy",
+  ]
+  max_session_duration = 3600
+  name                 = "ecsRenovateTaskExecutionRole"
+  path                 = "/"
+  tags                 = {}
+  tags_all             = {}
+}
+
+resource "aws_iam_role_policy_attachment" "renovate_task_execution_policy_attach" {
+  role       = aws_iam_role.renovate_task_execution_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
 resource "aws_iam_role" "renovate_task_role" {
@@ -218,7 +250,7 @@ resource "aws_iam_role" "renovate_task_role" {
   force_detach_policies = false
   managed_policy_arns   = []
   max_session_duration  = 3600
-  name                  = "ecsTaskRenovateServiceRole"
+  name                  = "ecsRenovateTaskRole"
   path                  = "/"
   tags                  = {}
   tags_all              = {}

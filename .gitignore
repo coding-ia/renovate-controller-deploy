@@ -5,3 +5,4 @@
 *.auto.tfvars
 *.tfstate
 *.tfstate.backup
+*.backup
