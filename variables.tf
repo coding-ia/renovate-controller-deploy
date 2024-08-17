@@ -3,6 +3,18 @@ variable "github_application_id" {
   type        = string
 }
 
+variable "github_enterprise_server" {
+  description = "GitHub Enterprise Server."
+  type        = bool
+  default     = false
+}
+
+variable "github_enterprise_server_host" {
+  description = "GitHub Application ID."
+  type        = string
+  default     = ""
+}
+
 variable "ecs_cluster_name" {
   description = "ECS Cluster to run the tasks on."
   type        = string

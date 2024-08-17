@@ -1,5 +1,6 @@
 locals {
   public_ip_enabled = var.assign_public_ip_to_task ? "true" : "false"
+  server_host       = var.github_enterprise_server ? var.github_enterprise_server_host : "api.github.com"
 }
 
 data "aws_caller_identity" "current" {}
@@ -20,6 +21,10 @@ resource "aws_ecs_task_definition" "renovate" {
           {
             name  = "GITHUB_APPLICATION_PRIVATE_PEM_AWS_SECRET"
             value = "${aws_secretsmanager_secret.github_application_pem.arn}"
+          },
+          {
+            name  = "GITHUB_APPLICATION_ENDPOINT"
+            value = "${local.server_host}"
           },
           {
             name  = "CONFIG_TEMPLATE_BUCKET"
@@ -154,6 +159,10 @@ resource "aws_ecs_task_definition" "renovate_controller" {
             name  = "GITHUB_APPLICATION_PRIVATE_PEM_AWS_SECRET"
             value = "${aws_secretsmanager_secret.github_application_pem.name}"
           },
+          {
+            name  = "GITHUB_APPLICATION_ENDPOINT"
+            value = "${local.server_host}"
+          }
         ]
         environmentFiles = []
         essential        = true
