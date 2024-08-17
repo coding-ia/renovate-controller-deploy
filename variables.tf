@@ -3,11 +3,6 @@ variable "github_application_id" {
   type        = string
 }
 
-variable "github_application_id" {
-  description = "GitHub Application ID."
-  type        = string
-}
-
 variable "ecs_cluster_name" {
   description = "ECS Cluster to run the tasks on."
   type        = string
@@ -28,5 +23,5 @@ variable "renovate_container_image" {
 variable "renovate_controller_container_image" {
   description = "Renovate Controller docker image."
   type        = string
-  default     = "211125334931.dkr.ecr.us-east-2.amazonaws.com/renovate-controller:latest"
+  default     = "ghcr.io/coding-ia/renovate-controller:1.0.0"
 }
