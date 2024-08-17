@@ -25,3 +25,8 @@ variable "renovate_controller_container_image" {
   type        = string
   default     = "ghcr.io/coding-ia/renovate-controller:1.0.0"
 }
+
+variable "subnets" {
+  description = "VPC subnets to run ECS tasks."
+  type        = list(string)
+}

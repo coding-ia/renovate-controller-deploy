@@ -2,6 +2,8 @@ locals {
   public_ip_enabled = var.assign_public_ip_to_task ? "true" : "false"
 }
 
+data "aws_caller_identity" "current" {}
+
 resource "aws_ecs_task_definition" "renovate" {
   container_definitions = jsonencode(
     [
@@ -123,7 +125,7 @@ resource "aws_ecs_task_definition" "renovate" {
   }
 }
 
-resource "aws_ecs_task_definition" "renovate-controller" {
+resource "aws_ecs_task_definition" "renovate_controller" {
   container_definitions = jsonencode(
     [
       {
@@ -276,4 +278,119 @@ resource "aws_secretsmanager_secret" "github_application_pem" {
 resource "aws_secretsmanager_secret_version" "pem_contents" {
   secret_id     = aws_secretsmanager_secret.github_application_pem.id
   secret_string = file("application.pem")
+}
+
+data "aws_ecs_cluster" "selected_ecs_cluster" {
+  cluster_name = var.ecs_cluster_name
+}
+
+resource "aws_scheduler_schedule" "renovate_schedule" {
+  group_name                   = "default"
+  name                         = "Renovate"
+  schedule_expression          = "rate(4 hours)"
+  schedule_expression_timezone = "America/Los_Angeles"
+  state                        = "ENABLED"
+
+  flexible_time_window {
+    mode = "OFF"
+  }
+
+  target {
+    arn      = data.aws_ecs_cluster.selected_ecs_cluster.arn
+    role_arn = aws_iam_role.aws_scheduler_schedule_role.arn
+
+    ecs_parameters {
+      enable_ecs_managed_tags = true
+      enable_execute_command  = false
+      launch_type             = "FARGATE"
+      tags                    = {}
+      task_count              = 1
+      task_definition_arn     = aws_ecs_task_definition.renovate_controller.arn
+
+      network_configuration {
+        assign_public_ip = true
+        security_groups  = []
+        subnets          = var.subnets
+      }
+    }
+
+    retry_policy {
+      maximum_event_age_in_seconds = 86400
+      maximum_retry_attempts       = 0
+    }
+  }
+}
+
+resource "aws_iam_role" "aws_scheduler_schedule_role" {
+  assume_role_policy = jsonencode(
+    {
+      Statement = [
+        {
+          Action = "sts:AssumeRole"
+          Condition = {
+            StringEquals = {
+              "aws:SourceAccount" = data.aws_caller_identity.current.account_id
+            }
+          }
+          Effect = "Allow"
+          Principal = {
+            Service = "scheduler.amazonaws.com"
+          }
+        },
+      ]
+      Version = "2012-10-17"
+    }
+  )
+  force_detach_policies = false
+  max_session_duration  = 3600
+  name                  = "Amazon_EventBridge_Scheduler_ECS_829bb6832b"
+  path                  = "/service-role/"
+  tags                  = {}
+  tags_all              = {}
+}
+
+resource "aws_iam_policy" "eventbridge_schedule_managed_policy" {
+  name_prefix = "Amazon-EventBridge-Scheduler-Execution-Policy-"
+  path        = "/service-role/"
+  policy = jsonencode(
+    {
+      Statement = [
+        {
+          Action = [
+            "ecs:RunTask",
+          ]
+          Condition = {
+            ArnLike = {
+              "ecs:cluster" = data.aws_ecs_cluster.selected_ecs_cluster.arn
+            }
+          }
+          Effect = "Allow"
+          Resource = [
+            "${aws_ecs_task_definition.renovate_controller.arn_without_revision}:*",
+            "${aws_ecs_task_definition.renovate_controller.arn_without_revision}",
+          ]
+        },
+        {
+          Action = "iam:PassRole"
+          Condition = {
+            StringLike = {
+              "iam:PassedToService" = "ecs-tasks.amazonaws.com"
+            }
+          }
+          Effect = "Allow"
+          Resource = [
+            "*",
+          ]
+        },
+      ]
+      Version = "2012-10-17"
+    }
+  )
+  tags     = {}
+  tags_all = {}
+}
+
+resource "aws_iam_role_policy_attachment" "eventbridge_schedule_role_policy_attach" {
+  role       = aws_iam_role.aws_scheduler_schedule_role.name
+  policy_arn = aws_iam_policy.eventbridge_schedule_managed_policy.arn
 }
