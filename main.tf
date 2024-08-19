@@ -260,45 +260,63 @@ resource "aws_iam_role" "renovate_task_role" {
   )
   description           = "Allows ECS tasks to call AWS services on your behalf."
   force_detach_policies = false
-  managed_policy_arns   = []
   max_session_duration  = 3600
   name                  = "ecsRenovateTaskRole"
   path                  = "/"
   tags                  = {}
   tags_all              = {}
+}
 
-  inline_policy {
-    name = "permissions"
-    policy = jsonencode(
-      {
-        Statement = [
-          {
-            Action   = "ec2:DescribeSubnets"
-            Effect   = "Allow"
-            Resource = "*"
-            Sid      = "VisualEditor0"
-          },
-          {
-            Action = [
-              "s3:GetObject",
-              "iam:PassRole",
-              "secretsmanager:GetSecretValue",
-              "ecs:RunTask",
-            ]
-            Effect = "Allow"
-            Resource = [
-              "${aws_secretsmanager_secret.github_application_pem.arn}",
-              "${aws_s3_object.object.arn}",
-              "arn:aws:iam::${local.account_id}:role/*",
-              "arn:aws:ecs:*:${local.account_id}:task-definition/*:*",
-            ]
-            Sid = "VisualEditor1"
-          },
-        ]
-        Version = "2012-10-17"
-      }
-    )
-  }
+resource "aws_iam_policy" "renovate_task_role_policy" {
+  name_prefix = "Renovate-Task-Policy-"
+  path        = "/"
+  policy = jsonencode(
+    {
+      Statement = [
+        {
+          Action   = "ec2:DescribeSubnets"
+          Effect   = "Allow"
+          Resource = "*"
+          Sid      = "VisualEditor0"
+        },
+        {
+          Action   = "ecs:RunTask"
+          Effect   = "Allow"
+          Resource = "arn:aws:ecs:*:211125334931:task-definition/*:*"
+          Sid      = "VisualEditor1"
+        },
+        {
+          Action = "iam:PassRole"
+          Effect = "Allow"
+          Resource = [
+            "${aws_iam_role.renovate_task_role.arn}",
+            "${aws_iam_role.renovate_task_execution_role.arn}",
+          ]
+          Sid = "VisualEditor2"
+        },
+        {
+          Action   = "secretsmanager:GetSecretValue"
+          Effect   = "Allow"
+          Resource = "${aws_secretsmanager_secret.github_application_pem.arn}"
+          Sid      = "VisualEditor3"
+        },
+        {
+          Action   = "s3:GetObject"
+          Effect   = "Allow"
+          Resource = "${aws_s3_object.object.arn}"
+          Sid      = "VisualEditor4"
+        },
+      ]
+      Version = "2012-10-17"
+    }
+  )
+  tags     = {}
+  tags_all = {}
+}
+
+resource "aws_iam_role_policy_attachment" "renovate_task_policy_attach" {
+  role       = aws_iam_role.renovate_task_role.name
+  policy_arn = aws_iam_policy.renovate_task_role_policy.arn
 }
 
 resource "aws_s3_bucket" "renovate" {
