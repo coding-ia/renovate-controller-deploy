@@ -339,6 +339,12 @@ resource "aws_iam_policy" "renovate_task_role_policy" {
           Resource = "${aws_s3_object.object.arn}"
           Sid      = "VisualEditor4"
         },
+        {
+          Action   = "ec2:DescribeSecurityGroups"
+          Effect   = "Allow"
+          Resource = "*"
+          Sid      = "VisualEditor5"
+        },
       ]
       Version = "2012-10-17"
     }
@@ -569,6 +575,12 @@ resource "aws_iam_role" "renovate_webhook_controller_role" {
             Sid      = "VisualEditor0"
           },
           {
+            Action   = "ec2:DescribeSecurityGroups"
+            Effect   = "Allow"
+            Resource = "*"
+            Sid      = "VisualEditor1"
+          },
+          {
             Action = [
               "iam:PassRole",
               "ecs:RunTask",
@@ -579,7 +591,7 @@ resource "aws_iam_role" "renovate_webhook_controller_role" {
               "${aws_iam_role.renovate_task_role.arn}",
               "${aws_iam_role.renovate_task_execution_role.arn}",
             ]
-            Sid = "VisualEditor1"
+            Sid = "VisualEditor2"
           },
         ]
         Version = "2012-10-17"
