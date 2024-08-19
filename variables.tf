@@ -3,6 +3,12 @@ variable "github_application_id" {
   type        = string
 }
 
+variable "github_application_webhook_secret" {
+  description = "GitHub Application Webhook Secret."
+  type        = string
+  sensitive   = true
+}
+
 variable "github_enterprise_server" {
   description = "GitHub Enterprise Server."
   type        = bool

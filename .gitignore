@@ -6,3 +6,4 @@
 *.tfstate
 *.tfstate.backup
 *.backup
+renovate-webhook-controller.zip
