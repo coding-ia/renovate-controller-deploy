@@ -1,3 +1,4 @@
+data "aws_region" "current" {}
 data "aws_caller_identity" "current" {}
 
 locals {
@@ -522,7 +523,8 @@ resource "aws_iam_role" "renovate_webhook_controller_role" {
             Effect = "Allow"
             Resource = [
               "${aws_ecs_task_definition.renovate.arn}",
-              "arn:aws:iam::${local.account_id}:role/*",
+              "${aws_iam_role.renovate_task_role.arn}",
+              "${aws_iam_role.renovate_task_execution_role.arn}",
             ]
             Sid = "VisualEditor1"
           },
