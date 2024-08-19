@@ -452,7 +452,7 @@ resource "aws_lambda_function" "renovate_webhook_controller" {
   skip_destroy                   = false
   tags                           = {}
   tags_all                       = {}
-  timeout                        = 3
+  timeout                        = 300
 
   environment {
     variables = {
