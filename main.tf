@@ -384,7 +384,7 @@ resource "aws_iam_role" "aws_scheduler_schedule_role" {
   )
   force_detach_policies = false
   max_session_duration  = 3600
-  name                  = "Amazon_EventBridge_Scheduler_ECS_829bb6832b"
+  name_prefix           = "Amazon_EventBridge_Scheduler_ECS_"
   path                  = "/service-role/"
   tags                  = {}
   tags_all              = {}
@@ -434,4 +434,132 @@ resource "aws_iam_policy" "eventbridge_schedule_managed_policy" {
 resource "aws_iam_role_policy_attachment" "eventbridge_schedule_role_policy_attach" {
   role       = aws_iam_role.aws_scheduler_schedule_role.name
   policy_arn = aws_iam_policy.eventbridge_schedule_managed_policy.arn
+}
+
+resource "aws_lambda_function" "renovate_webhook_controller" {
+  architectures = [
+    "x86_64",
+  ]
+  filename                       = "renovate-webhook-controller.zip"
+  function_name                  = "renovate-webhook-controller"
+  handler                        = "bootstrap"
+  layers                         = []
+  memory_size                    = 128
+  package_type                   = "Zip"
+  reserved_concurrent_executions = -1
+  role                           = aws_iam_role.renovate_webhook_controller_role.arn
+  runtime                        = "provided.al2"
+  skip_destroy                   = false
+  tags                           = {}
+  tags_all                       = {}
+  timeout                        = 3
+
+  environment {
+    variables = {
+      "AWS_ECS_CLUSTER_NAME"   = "${var.ecs_cluster_name}"
+      "AWS_ECS_CLUSTER_TASK"   = "${aws_ecs_task_definition.renovate.id}"
+      "AWS_ECS_TASK_PUBLIC_IP" = "${local.public_ip_enabled}"
+      "GITHUB_APPLICATION_ID"  = "${var.github_application_id}"
+      "WEBHOOK_SECRET"         = "${var.github_application_webhook_secret}"
+    }
+  }
+
+  ephemeral_storage {
+    size = 512
+  }
+
+  logging_config {
+    log_format = "Text"
+    log_group  = "/aws/lambda/renovate-webhook-controller"
+  }
+
+  tracing_config {
+    mode = "PassThrough"
+  }
+}
+
+resource "aws_iam_role" "renovate_webhook_controller_role" {
+  assume_role_policy = jsonencode(
+    {
+      Statement = [
+        {
+          Action = "sts:AssumeRole"
+          Effect = "Allow"
+          Principal = {
+            Service = "lambda.amazonaws.com"
+          }
+        },
+      ]
+      Version = "2012-10-17"
+    }
+  )
+  force_detach_policies = false
+  max_session_duration  = 3600
+  name_prefix           = "renovate-webhook-controller-role-"
+  path                  = "/service-role/"
+  tags                  = {}
+  tags_all              = {}
+
+  inline_policy {
+    name = "RenovateWebhookControllerPermissions"
+    policy = jsonencode(
+      {
+        Statement = [
+          {
+            Action   = "ec2:DescribeSubnets"
+            Effect   = "Allow"
+            Resource = "*"
+            Sid      = "VisualEditor0"
+          },
+          {
+            Action = [
+              "iam:PassRole",
+              "ecs:RunTask",
+            ]
+            Effect = "Allow"
+            Resource = [
+              "${aws_ecs_task_definition.renovate.arn}",
+              "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/*",
+            ]
+            Sid = "VisualEditor1"
+          },
+        ]
+        Version = "2012-10-17"
+      }
+    )
+  }
+}
+
+resource "aws_iam_policy" "renovate_webhook_controller_managed_policy" {
+  name_prefix = "AWSLambdaBasicExecutionRole-"
+  path        = "/service-role/"
+  policy = jsonencode(
+    {
+      Statement = [
+        {
+          Action   = "logs:CreateLogGroup"
+          Effect   = "Allow"
+          Resource = "arn:aws:logs:*:${data.aws_caller_identity.current.account_id}:*"
+        },
+        {
+          Action = [
+            "logs:CreateLogStream",
+            "logs:PutLogEvents",
+          ]
+          Effect = "Allow"
+          Resource = [
+            "arn:aws:logs:*:${data.aws_caller_identity.current.account_id}:log-group:${aws_lambda_function.renovate_webhook_controller.logging_config[0].log_group}:*",
+          ]
+        },
+      ]
+      Version = "2012-10-17"
+    }
+  )
+  tags     = {}
+  tags_all = {}
+}
+
+resource "aws_iam_role_policy_attachment" "renovate_webhook_controller_role_policy_attach" {
+  role       = aws_iam_role.renovate_webhook_controller_role.name
+  policy_arn = aws_iam_policy.renovate_webhook_controller_managed_policy.arn
 }
