@@ -1,9 +1,11 @@
+data "aws_caller_identity" "current" {}
+
 locals {
   public_ip_enabled = var.assign_public_ip_to_task ? "true" : "false"
   server_host       = var.github_enterprise_server ? var.github_enterprise_server_host : "api.github.com"
+  account_id        = data.aws_caller_identity.current.account_id
+  region            = data.aws_region.current.name
 }
-
-data "aws_caller_identity" "current" {}
 
 resource "aws_ecs_task_definition" "renovate" {
   container_definitions = jsonencode(
@@ -46,7 +48,7 @@ resource "aws_ecs_task_definition" "renovate" {
           options = {
             awslogs-create-group  = "true"
             awslogs-group         = "/ecs/renovate"
-            awslogs-region        = "us-east-2"
+            awslogs-region        = "${local.region}"
             awslogs-stream-prefix = "ecs"
             max-buffer-size       = "25m"
             mode                  = "non-blocking"
@@ -85,7 +87,7 @@ resource "aws_ecs_task_definition" "renovate" {
           options = {
             awslogs-create-group  = "true"
             awslogs-group         = "/ecs/renovate"
-            awslogs-region        = "us-east-2"
+            awslogs-region        = "${local.region}"
             awslogs-stream-prefix = "ecs"
             max-buffer-size       = "25m"
             mode                  = "non-blocking"
@@ -172,7 +174,7 @@ resource "aws_ecs_task_definition" "renovate_controller" {
           options = {
             awslogs-create-group  = "true"
             awslogs-group         = "/ecs/renovate-controller"
-            awslogs-region        = "us-east-2"
+            awslogs-region        = "${local.region}"
             awslogs-stream-prefix = "ecs"
             max-buffer-size       = "25m"
             mode                  = "non-blocking"
@@ -286,8 +288,8 @@ resource "aws_iam_role" "renovate_task_role" {
             Resource = [
               "${aws_secretsmanager_secret.github_application_pem.arn}",
               "${aws_s3_object.object.arn}",
-              "arn:aws:iam::211125334931:role/*",
-              "arn:aws:ecs:*:211125334931:task-definition/*:*",
+              "arn:aws:iam::${local.account_id}:role/*",
+              "arn:aws:ecs:*:${local.account_id}:task-definition/*:*",
             ]
             Sid = "VisualEditor1"
           },
@@ -370,7 +372,7 @@ resource "aws_iam_role" "aws_scheduler_schedule_role" {
           Action = "sts:AssumeRole"
           Condition = {
             StringEquals = {
-              "aws:SourceAccount" = data.aws_caller_identity.current.account_id
+              "aws:SourceAccount" = local.account_id
             }
           }
           Effect = "Allow"
@@ -520,7 +522,7 @@ resource "aws_iam_role" "renovate_webhook_controller_role" {
             Effect = "Allow"
             Resource = [
               "${aws_ecs_task_definition.renovate.arn}",
-              "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/*",
+              "arn:aws:iam::${local.account_id}:role/*",
             ]
             Sid = "VisualEditor1"
           },
@@ -540,7 +542,7 @@ resource "aws_iam_policy" "renovate_webhook_controller_managed_policy" {
         {
           Action   = "logs:CreateLogGroup"
           Effect   = "Allow"
-          Resource = "arn:aws:logs:*:${data.aws_caller_identity.current.account_id}:*"
+          Resource = "arn:aws:logs:*:${local.account_id}:*"
         },
         {
           Action = [
@@ -549,7 +551,7 @@ resource "aws_iam_policy" "renovate_webhook_controller_managed_policy" {
           ]
           Effect = "Allow"
           Resource = [
-            "arn:aws:logs:*:${data.aws_caller_identity.current.account_id}:log-group:${aws_lambda_function.renovate_webhook_controller.logging_config[0].log_group}:*",
+            "arn:aws:logs:*:${local.account_id}:log-group:${aws_lambda_function.renovate_webhook_controller.logging_config[0].log_group}:*",
           ]
         },
       ]
