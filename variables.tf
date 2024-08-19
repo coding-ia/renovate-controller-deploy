@@ -32,6 +32,12 @@ variable "assign_public_ip_to_task" {
   default     = true
 }
 
+variable "renovate_configuration_file" {
+  description = "Renovate configuration file."
+  type        = string
+  default     = ""
+}
+
 variable "renovate_container_image" {
   description = "Renovate application docker image."
   type        = string

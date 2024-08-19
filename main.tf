@@ -4,6 +4,7 @@ data "aws_caller_identity" "current" {}
 locals {
   public_ip_enabled = var.assign_public_ip_to_task ? "true" : "false"
   server_host       = var.github_enterprise_server ? var.github_enterprise_server_host : "api.github.com"
+  renovate_config   = var.renovate_configuration_file == "" ? "config.js" : var.renovate_configuration_file
   account_id        = data.aws_caller_identity.current.account_id
   region            = data.aws_region.current.name
 }
@@ -282,7 +283,7 @@ resource "aws_iam_policy" "renovate_task_role_policy" {
         {
           Action   = "ecs:RunTask"
           Effect   = "Allow"
-          Resource = "arn:aws:ecs:*:211125334931:task-definition/*:*"
+          Resource = "${aws_ecs_task_definition.renovate.arn_without_revision}:*"
           Sid      = "VisualEditor1"
         },
         {
@@ -326,9 +327,9 @@ resource "aws_s3_bucket" "renovate" {
 resource "aws_s3_object" "object" {
   bucket = aws_s3_bucket.renovate.id
   key    = "config.js"
-  source = "config.js"
+  source = local.renovate_config
 
-  etag = filemd5("config.js")
+  etag = filemd5(local.renovate_config)
 }
 
 resource "aws_secretsmanager_secret" "github_application_pem" {
@@ -540,7 +541,7 @@ resource "aws_iam_role" "renovate_webhook_controller_role" {
             ]
             Effect = "Allow"
             Resource = [
-              "${aws_ecs_task_definition.renovate.arn}",
+              "${aws_ecs_task_definition.renovate.arn_without_revision}:*",
               "${aws_iam_role.renovate_task_role.arn}",
               "${aws_iam_role.renovate_task_execution_role.arn}",
             ]
