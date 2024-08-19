@@ -4,7 +4,7 @@ data "aws_caller_identity" "current" {}
 locals {
   public_ip_enabled = var.assign_public_ip_to_task ? "true" : "false"
   server_host       = var.github_enterprise_server ? var.github_enterprise_server_host : "api.github.com"
-  renovate_config   = var.renovate_configuration_file == "" ? "config.js" : var.renovate_configuration_file
+  renovate_config   = var.renovate_configuration_file == "" ? "${path.module}\\config.js" : var.renovate_configuration_file
   account_id        = data.aws_caller_identity.current.account_id
   region            = data.aws_region.current.name
 }
