@@ -4,7 +4,7 @@ data "aws_caller_identity" "current" {}
 locals {
   public_ip_enabled = var.assign_public_ip_to_task ? "true" : "false"
   server_host       = var.github_enterprise_server ? var.github_enterprise_server_host : "api.github.com"
-  renovate_config   = var.renovate_configuration_file == "" ? "${path.module}\\config.js" : var.renovate_configuration_file
+  renovate_config   = var.renovate_configuration_file == "" ? "${path.module}/config.js" : var.renovate_configuration_file
   account_id        = data.aws_caller_identity.current.account_id
   region            = data.aws_region.current.name
 }
@@ -211,6 +211,38 @@ resource "aws_ecs_task_definition" "renovate_controller" {
   }
 }
 
+data "aws_subnet" "selected" {
+  id = var.subnets[0]
+}
+
+resource "aws_security_group" "renovate_task" {
+  description = "Attach to renovate tasks"
+  egress = [
+    {
+      cidr_blocks = [
+        "0.0.0.0/0",
+      ]
+      description = ""
+      from_port   = 0
+      ipv6_cidr_blocks = [
+        "::/0",
+      ]
+      prefix_list_ids = []
+      protocol        = "-1"
+      security_groups = []
+      self            = false
+      to_port         = 0
+    },
+  ]
+  ingress = []
+  name    = "renovate-task"
+  tags = {
+    "renovate" = "true",
+  }
+  tags_all = {}
+  vpc_id   = data.aws_subnet.selected.vpc_id
+}
+
 resource "aws_iam_role" "renovate_task_execution_role" {
   assume_role_policy = jsonencode(
     {
@@ -371,9 +403,11 @@ resource "aws_scheduler_schedule" "renovate_schedule" {
       task_definition_arn     = aws_ecs_task_definition.renovate_controller.arn
 
       network_configuration {
-        assign_public_ip = true
-        security_groups  = []
-        subnets          = var.subnets
+        assign_public_ip = var.assign_public_ip_to_task
+        security_groups = [
+          aws_security_group.renovate_task.id
+        ]
+        subnets = var.subnets
       }
     }
 
