@@ -7,3 +7,4 @@
 *.tfstate.backup
 *.backup
 renovate-webhook-controller.zip
+.terraform.tfstate.lock.info

@@ -450,6 +450,7 @@ resource "aws_lambda_function" "renovate_webhook_controller" {
   role                           = aws_iam_role.renovate_webhook_controller_role.arn
   runtime                        = "provided.al2"
   skip_destroy                   = false
+  source_code_hash               = filesha256("renovate-webhook-controller.zip")
   tags                           = {}
   tags_all                       = {}
   timeout                        = 300
