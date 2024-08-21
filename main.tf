@@ -156,6 +156,14 @@ resource "aws_ecs_task_definition" "renovate_controller" {
             value = "${local.public_ip_enabled}"
           },
           {
+            name  = "AWS_ECS_TASK_SUBNET_IDS"
+            value = join(",", var.subnets)
+          },
+          {
+            name  = "AWS_ECS_TASK_SECURITY_GROUP_IDS"
+            value = aws_security_group.renovate_task.id
+          },
+          {
             name  = "GITHUB_APPLICATION_ID"
             value = "${var.github_application_id}"
           },
