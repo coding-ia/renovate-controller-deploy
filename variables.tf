@@ -57,12 +57,12 @@ variable "subnets" {
 
 variable "schedule_expression" {
   description = "Schedule expression for Renovate task."
-  type        = list(string)
+  type        = string
   default     = "cron(0 5 * * ? *)"
 }
 
 variable "schedule_expression_timezone" {
   description = "Timezone for schedule expression."
-  type        = list(string)
+  type        = string
   default     = "UTC"
 }
