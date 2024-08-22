@@ -396,8 +396,8 @@ data "aws_ecs_cluster" "selected_ecs_cluster" {
 resource "aws_scheduler_schedule" "renovate_schedule" {
   group_name                   = "default"
   name                         = "Renovate"
-  schedule_expression          = "rate(4 hours)"
-  schedule_expression_timezone = "America/Los_Angeles"
+  schedule_expression          = var.schedule_expression
+  schedule_expression_timezone = var.schedule_expression_timezone
   state                        = "ENABLED"
 
   flexible_time_window {
