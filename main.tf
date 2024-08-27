@@ -157,7 +157,7 @@ resource "aws_ecs_task_definition" "renovate_controller" {
           },
           {
             name  = "AWS_ECS_TASK_SUBNET_IDS"
-            value = join(" ", var.subnets)
+            value = join(",", var.subnets)
           },
           {
             name  = "AWS_ECS_TASK_SECURITY_GROUP_IDS"
@@ -530,7 +530,7 @@ resource "aws_lambda_function" "renovate_webhook_controller" {
       "AWS_ECS_CLUSTER_NAME"            = "${var.ecs_cluster_name}"
       "AWS_ECS_CLUSTER_TASK"            = "${aws_ecs_task_definition.renovate.id}"
       "AWS_ECS_TASK_PUBLIC_IP"          = "${local.public_ip_enabled}"
-      "AWS_ECS_TASK_SUBNET_IDS"         = join(" ", var.subnets)
+      "AWS_ECS_TASK_SUBNET_IDS"         = join(",", var.subnets)
       "AWS_ECS_TASK_SECURITY_GROUP_IDS" = aws_security_group.renovate_task.id
       "GITHUB_APPLICATION_ID"           = "${var.github_application_id}"
       "WEBHOOK_SECRET"                  = "${var.github_application_webhook_secret}"
