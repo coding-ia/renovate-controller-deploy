@@ -31,10 +31,6 @@ resource "aws_ecs_task_definition" "renovate" {
             value = "${local.server_host}"
           },
           {
-            name  = "GITHUB_COM_TOKEN"
-            value = "${var.github_com_token}"
-          },
-          {
             name  = "CONFIG_TEMPLATE_BUCKET"
             value = "${aws_s3_bucket.renovate.id}"
           },
@@ -81,6 +77,10 @@ resource "aws_ecs_task_definition" "renovate" {
           },
         ]
         environment = [
+          {
+            name  = "GITHUB_COM_TOKEN"
+            value = "${var.github_com_token}"
+          },
           {
             name  = "RENOVATE_CONFIG_FILE"
             value = "/data/${aws_s3_object.object.id}"

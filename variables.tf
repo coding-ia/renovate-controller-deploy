@@ -24,6 +24,7 @@ variable "github_enterprise_server_host" {
 variable "github_com_token" {
   description = "GitHub.com token."
   type        = string
+  default     = ""
 }
 
 variable "ecs_cluster_name" {
