@@ -17,15 +17,36 @@ resource "aws_ecs_task_definition" "renovate" {
           "task",
           "generate-config",
         ]
-        environment = compact([
-          { name = "GITHUB_APPLICATION_ID", value = "${var.github_application_id}" },
-          { name = "GITHUB_APPLICATION_PRIVATE_PEM_AWS_SECRET", value = aws_secretsmanager_secret.github_application_pem.arn },
-          { name = "GITHUB_APPLICATION_ENDPOINT", value = local.server_host },
-          { name = "CONFIG_TEMPLATE_BUCKET", value = aws_s3_bucket.renovate.id },
-          { name = "CONFIG_TEMPLATE_KEY", value = aws_s3_object.object.id },
-          { name = "GENERATE_CONFIG_OUTPUT", value = "/data/${aws_s3_object.object.id}" },
-          var.github_com_token != null ? { name = "GITHUB_COM_TOKEN", value = var.github_com_token } : null,
-        ])
+        environment = [
+          {
+            name  = "GITHUB_APPLICATION_ID"
+            value = "${var.github_application_id}"
+          },
+          {
+            name  = "GITHUB_APPLICATION_PRIVATE_PEM_AWS_SECRET"
+            value = "${aws_secretsmanager_secret.github_application_pem.arn}"
+          },
+          {
+            name  = "GITHUB_APPLICATION_ENDPOINT"
+            value = "${local.server_host}"
+          },
+          {
+            name  = "GITHUB_COM_TOKEN"
+            value = "${var.github_com_token}"
+          },
+          {
+            name  = "CONFIG_TEMPLATE_BUCKET"
+            value = "${aws_s3_bucket.renovate.id}"
+          },
+          {
+            name  = "CONFIG_TEMPLATE_KEY"
+            value = "${aws_s3_object.object.id}"
+          },
+          {
+            name  = "GENERATE_CONFIG_OUTPUT"
+            value = "/data/${aws_s3_object.object.id}"
+          },
+        ]
         essential = false
         image     = "${var.renovate_controller_container_image}"
         logConfiguration = {
