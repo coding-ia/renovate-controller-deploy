@@ -18,7 +18,7 @@ resource "aws_ecs_task_definition" "renovate" {
           "generate-config",
         ]
         environment = compact([
-          { name = "GITHUB_APPLICATION_ID", value = var.github_application_id },
+          { name = "GITHUB_APPLICATION_ID", value = "${var.github_application_id}" },
           { name = "GITHUB_APPLICATION_PRIVATE_PEM_AWS_SECRET", value = aws_secretsmanager_secret.github_application_pem.arn },
           { name = "GITHUB_APPLICATION_ENDPOINT", value = local.server_host },
           { name = "CONFIG_TEMPLATE_BUCKET", value = aws_s3_bucket.renovate.id },
