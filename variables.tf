@@ -21,6 +21,11 @@ variable "github_enterprise_server_host" {
   default     = ""
 }
 
+variable "github_com_token" {
+  description = "GitHub.com token."
+  type        = string
+}
+
 variable "ecs_cluster_name" {
   description = "ECS Cluster to run the tasks on."
   type        = string
