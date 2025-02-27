@@ -53,7 +53,7 @@ variable "renovate_container_image" {
 variable "renovate_controller_container_image" {
   description = "Renovate Controller docker image."
   type        = string
-  default     = "ghcr.io/coding-ia/renovate-controller:1.0.4"
+  default     = "ghcr.io/coding-ia/renovate-controller:1.0.5"
 }
 
 variable "subnets" {
