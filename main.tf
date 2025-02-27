@@ -272,9 +272,6 @@ resource "aws_iam_role" "renovate_task_execution_role" {
     }
   )
   force_detach_policies = false
-  managed_policy_arns = [
-    "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy",
-  ]
   max_session_duration = 3600
   name                 = "ecsRenovateTaskExecutionRole"
   path                 = "/"
