@@ -272,11 +272,11 @@ resource "aws_iam_role" "renovate_task_execution_role" {
     }
   )
   force_detach_policies = false
-  max_session_duration = 3600
-  name                 = "ecsRenovateTaskExecutionRole"
-  path                 = "/"
-  tags                 = {}
-  tags_all             = {}
+  max_session_duration  = 3600
+  name                  = "ecsRenovateTaskExecutionRole"
+  path                  = "/"
+  tags                  = {}
+  tags_all              = {}
 }
 
 resource "aws_iam_role_policy_attachment" "renovate_task_execution_policy_attach" {
@@ -573,42 +573,44 @@ resource "aws_iam_role" "renovate_webhook_controller_role" {
   path                  = "/service-role/"
   tags                  = {}
   tags_all              = {}
+}
 
-  inline_policy {
-    name = "RenovateWebhookControllerPermissions"
-    policy = jsonencode(
-      {
-        Statement = [
-          {
-            Action   = "ec2:DescribeSubnets"
-            Effect   = "Allow"
-            Resource = "*"
-            Sid      = "VisualEditor0"
-          },
-          {
-            Action   = "ec2:DescribeSecurityGroups"
-            Effect   = "Allow"
-            Resource = "*"
-            Sid      = "VisualEditor1"
-          },
-          {
-            Action = [
-              "iam:PassRole",
-              "ecs:RunTask",
-            ]
-            Effect = "Allow"
-            Resource = [
-              "${aws_ecs_task_definition.renovate.arn_without_revision}:*",
-              "${aws_iam_role.renovate_task_role.arn}",
-              "${aws_iam_role.renovate_task_execution_role.arn}",
-            ]
-            Sid = "VisualEditor2"
-          },
-        ]
-        Version = "2012-10-17"
-      }
-    )
-  }
+resource "aws_iam_role_policy" "renovate_webhook_controller_role_policy" {
+  name = "RenovateWebhookControllerPermissions"
+  role = aws_iam_role.renovate_webhook_controller_role.id
+
+  policy = jsonencode(
+    {
+      Statement = [
+        {
+          Action   = "ec2:DescribeSubnets"
+          Effect   = "Allow"
+          Resource = "*"
+          Sid      = "VisualEditor0"
+        },
+        {
+          Action   = "ec2:DescribeSecurityGroups"
+          Effect   = "Allow"
+          Resource = "*"
+          Sid      = "VisualEditor1"
+        },
+        {
+          Action = [
+            "iam:PassRole",
+            "ecs:RunTask",
+          ]
+          Effect = "Allow"
+          Resource = [
+            "${aws_ecs_task_definition.renovate.arn_without_revision}:*",
+            "${aws_iam_role.renovate_task_role.arn}",
+            "${aws_iam_role.renovate_task_execution_role.arn}",
+          ]
+          Sid = "VisualEditor2"
+        },
+      ]
+      Version = "2012-10-17"
+    }
+  )
 }
 
 resource "aws_iam_policy" "renovate_webhook_controller_managed_policy" {
