@@ -1,12 +1,12 @@
 module.exports = {
+  autodiscover: true,
   endpoint: '{{.Endpoint}}',
-  token: '{{.InstallationToken}}',
-  platform: 'github',
+  gitAuthor: 'Development Bot <dev-bot@my-software-company.com>',
   onboardingConfig: {
     extends: ['config:recommended', ':disableDependencyDashboard', 'group:allNonMajor'],
   },
   onboardingConfigFileName: '.github/renovate.json',
-  repositories: [{{range $index, $repo := .Repositories}}{{if $index}}, {{end}}"{{$repo}}"{{end}}],
-  gitAuthor: 'Development Bot <dev-bot@my-software-company.com>',
+  platform: 'github',
+  token: '{{.InstallationToken}}',
   username: 'Coding-IA Test[bot]'
 }
