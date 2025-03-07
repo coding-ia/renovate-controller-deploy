@@ -47,13 +47,13 @@ variable "renovate_configuration_file" {
 variable "renovate_container_image" {
   description = "Renovate application docker image."
   type        = string
-  default     = "renovate/renovate:38.30"
+  default     = "renovate/renovate:39.191"
 }
 
 variable "renovate_controller_container_image" {
   description = "Renovate Controller docker image."
   type        = string
-  default     = "ghcr.io/coding-ia/renovate-controller:1.0.5"
+  default     = "ghcr.io/coding-ia/renovate-controller:1.0.6"
 }
 
 variable "subnets" {
